@@ -1,0 +1,90 @@
+---
+title: "My Report"
+date: today
+author: Li-Hsun Chang
+format:
+ pdf:
+    include-in-header:
+      - text: |
+         \usepackage{setspace,relsize}
+mainfont: "Microsoft JhengHei UI"
+toc: true
+---
+
+# Dataset
+
+```{r}
+data <- read.csv("titanic.csv")
+head(data)
+```
+
+# Summary
+
+```{r}
+data[data == ""] <- NA
+data$Survived <- as.factor(data$Survived)
+data$Pclass <- as.factor(data$Pclass)
+data$Sex <- as.factor(data$Sex)
+data$SibSp <- as.factor(data$SibSp)
+data$Parch <- as.factor(data$Parch)
+data$Embarked <- as.factor(data$Embarked)
+summary(data)
+```
+
+# Missing Values
+
+```{r}
+library(DataExplorer)
+plot_missing(data)
+colSums(is.na(data))
+```
+
+# Data Visualization
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+## Histogram of Age by Survival Rate
+
+```{r}
+data %>%
+  ggplot() +
+  geom_histogram(aes(x = Age, fill = Survived), binwidth = 5, color = "light blue") +
+  theme(plot.title = element_text(hjust = 0.5, size = 16)) +
+  ggtitle("Histogram of Age by Survival Rate") +
+  scale_x_continuous(name = "Passenger Age", breaks = 5*c(0:18)) +
+  scale_y_continuous(name = "Passenger Count") +
+  scale_fill_discrete(name = "Outcome", labels = c("Not Survived", "Survived"))
+```
+
+## Bar chart of Pclass by Survival Rate
+
+```{r}
+pclass <- data %>%
+  group_by(Pclass) %>%
+  summarise(Count = n())
+pclass_ratio <- data %>%
+  group_by(Pclass, Survived) %>%
+  summarise(Count = n()) %>%
+  mutate(Percentage = round(Count/sum(Count)*100))
+data %>%
+  ggplot() +
+  geom_bar(aes(x = Pclass, fill = Survived)) +
+  geom_text(data = pclass, 
+            aes(x = Pclass, y = Count, label = Count), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            fontface = "bold") +
+  geom_label(data = pclass_ratio, 
+             aes(x = Pclass, y = Count, label = paste0(Percentage, "%"), group = Survived), position = position_stack(vjust = 0.5)) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5, size = 18, color = "#054354")) +
+  ggtitle("Bar chart of Pclass by Survival Rate") +
+  scale_x_discrete(name= "Pclass") +
+  scale_y_continuous(limits = c(0, 510), name = "Passenger Count") +
+  scale_fill_brewer(name = "Survival Rate", labels = c("Not Survived", "Survived"), palette = "Paired")
+```
+
+------------------------------------------------------------------------
